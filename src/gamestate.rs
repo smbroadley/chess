@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{
-    core::{Board, Direction, Piece, Player},
+    core::{Board, Piece, Player},
     timer::CountdownTimer,
     vec::Vec2,
 };
@@ -55,17 +55,12 @@ impl GameState {
         false
     }
 
-    pub fn move_cursor(&mut self, d: Direction) {
-        let x = self.cursor.x;
-        let y = self.cursor.y;
+    pub fn move_cursor(&mut self, dir: Vec2) {
+        let next = self.cursor + dir;
 
-        self.cursor = match d {
-            Direction::Up => (x, 0.max(y - 1)),
-            Direction::Down => (x, 7.min(y + 1)),
-            Direction::Left => (0.max(x - 1), y),
-            Direction::Right => (7.min(x + 1), y),
+        if next.x >= 0 && next.x < 8 && next.y >= 0 && next.y < 8 {
+            self.cursor = next;
         }
-        .into();
     }
 
     pub fn start(&mut self) {

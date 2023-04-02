@@ -1,12 +1,5 @@
 use crate::vec::Vec2;
 
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 #[repr(usize)]
 #[derive(Copy, Clone)]
 pub enum PieceType {
@@ -133,8 +126,8 @@ fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<V
 
 fn valid_pawn_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
     let dir = match piece.player {
-        Player::White => Vec2::from_direction(Direction::Up),
-        Player::Black => Vec2::from_direction(Direction::Down),
+        Player::White => Vec2::UP,
+        Player::Black => Vec2::DOWN,
     };
 
     if piece.move_count == 0 {

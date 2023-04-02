@@ -21,9 +21,9 @@ use tui::{
     widgets::Paragraph,
     Terminal,
 };
+use vec::Vec2;
 
 use crate::chess::Chess;
-use crate::core::Direction;
 use crate::core::Player;
 use crate::gamestate::GameState;
 use crate::theme::Theme;
@@ -102,10 +102,10 @@ fn main() -> Result<(), io::Error> {
             {
                 match code {
                     KeyCode::Esc => break,
-                    KeyCode::Char('h') => game.move_cursor(Direction::Left),
-                    KeyCode::Char('j') => game.move_cursor(Direction::Down),
-                    KeyCode::Char('k') => game.move_cursor(Direction::Up),
-                    KeyCode::Char('l') => game.move_cursor(Direction::Right),
+                    KeyCode::Char('h') => game.move_cursor(Vec2::LEFT),
+                    KeyCode::Char('j') => game.move_cursor(Vec2::DOWN),
+                    KeyCode::Char('k') => game.move_cursor(Vec2::UP),
+                    KeyCode::Char('l') => game.move_cursor(Vec2::RIGHT),
                     KeyCode::Char(' ') => game.action(),
                     _ => {}
                 }
