@@ -92,13 +92,11 @@ impl Board {
     }
 }
 
-// type ValidMoves = fn(pos: Vec2, player: Player, board: &Board, results: &mut Vec<Vec2>);
-
 fn valid_king_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
-    valid_linear_moves(board, piece.player, pos, Vec2::new(-1, 0), 1, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(0, -1), 1, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(1, 0), 1, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(0, 1), 1, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::UP, 1, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::DOWN, 1, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::LEFT, 1, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 1, results);
 }
 
 fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
@@ -107,19 +105,19 @@ fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<
 }
 
 fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
-    valid_linear_moves(board, piece.player, pos, Vec2::new(-1, -1), 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(1, -1), 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(1, 1), 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(-1, 1), 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::UP_LEFT, 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::UP_RIGHT, 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::DOWN_LEFT, 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::DOWN_RIGHT, 8, results);
 }
 
 fn valid_knight_moves(_board: &Board, _pos: Vec2, _piece: &Piece, _results: &mut Vec<Vec2>) {}
 
 fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
-    valid_linear_moves(board, piece.player, pos, Vec2::new(-1, 0), 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(0, -1), 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(1, 0), 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::new(0, 1), 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::UP, 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::DOWN, 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::LEFT, 8, results);
+    valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 8, results);
 }
 
 fn valid_pawn_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {

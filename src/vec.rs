@@ -17,6 +17,11 @@ impl Vec2 {
     pub const DOWN: Vec2 = Vec2::new(0, 1);
     pub const LEFT: Vec2 = Vec2::new(-1, 0);
     pub const RIGHT: Vec2 = Vec2::new(1, 0);
+
+    pub const UP_LEFT: Vec2 = Vec2::new(-1, -1);
+    pub const UP_RIGHT: Vec2 = Vec2::new(-1, 1);
+    pub const DOWN_LEFT: Vec2 = Vec2::new(1, -1);
+    pub const DOWN_RIGHT: Vec2 = Vec2::new(1, 1);
 }
 
 impl Mul<i16> for Vec2 {
