@@ -61,15 +61,15 @@ fn main() -> Result<(), io::Error> {
             // render clocks
             //
             let white_clock = if game.turn == Player::White {
-                theme.white_piece
+                theme.white.piece
             } else {
-                theme.white_tile
+                theme.white.tile
             };
 
             let black_clock = if game.turn == Player::Black {
-                theme.black_piece
+                theme.black.piece
             } else {
-                theme.black_tile
+                theme.black.tile
             };
 
             let p1 = Paragraph::new(Spans::from(vec![Span::styled(

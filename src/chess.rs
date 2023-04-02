@@ -1,5 +1,4 @@
 use crate::{
-    core::Player,
     gamestate::{GameState, Mode},
     theme::Theme,
     vec::Vec2,
@@ -35,13 +34,13 @@ impl<'a> StatefulWidget for Chess<'a> {
                 let is_white_tile = (x + y) % 2 == 1;
 
                 let mut col = if is_white_tile {
-                    self.theme.white_tile
+                    self.theme.white.tile
                 } else {
-                    self.theme.black_tile
+                    self.theme.black.tile
                 };
 
                 if is_cursor {
-                    col = self.theme.cursor;
+                    col = self.theme.get_player(state.turn).cursor;
 
                     match state.mode {
                         Mode::Selecting => {
@@ -61,9 +60,9 @@ impl<'a> StatefulWidget for Chess<'a> {
                         Mode::Moving(_) => {
                             if state.is_valid_move(xy) {
                                 if is_white_tile {
-                                    col = self.theme.white_tile_highlight;
+                                    col = self.theme.white.tile_highlight;
                                 } else {
-                                    col = self.theme.black_tile_highlight;
+                                    col = self.theme.black.tile_highlight;
                                 }
                             }
                         }
@@ -80,10 +79,8 @@ impl<'a> StatefulWidget for Chess<'a> {
                 //
                 if let Some(piece) = state.board.get(Vec2::new(x as i16, y as i16)) {
                     let glyph = glyphs[piece.ty as usize];
-                    let col = match piece.player {
-                        Player::White => self.theme.white_piece,
-                        Player::Black => self.theme.black_piece,
-                    };
+                    let col = self.theme.get_player(piece.player).piece;
+
                     buf.get_mut(sx, sy).set_symbol(glyph).set_fg(col);
                 }
             }

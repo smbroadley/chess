@@ -113,9 +113,7 @@ fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec
     valid_linear_moves(board, piece.player, pos, Vec2::new(-1, 1), 8, results);
 }
 
-fn valid_knight_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
-    // todo
-}
+fn valid_knight_moves(_board: &Board, _pos: Vec2, _piece: &Piece, _results: &mut Vec<Vec2>) {}
 
 fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
     valid_linear_moves(board, piece.player, pos, Vec2::new(-1, 0), 8, results);
