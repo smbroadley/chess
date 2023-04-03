@@ -132,11 +132,29 @@ impl Board {
     }
 
     pub fn move_piece(&mut self, from: Vec2, to: Vec2) {
+        self.get_mut(from).expect("Moves must be valid").move_count += 1;
         self.swap(from, to);
     }
 
     pub fn take_piece(&mut self, pos: Vec2) {
         self.get_square(pos).unwrap().take();
+    }
+
+    pub fn is_vacant(&self, pos: Vec2) -> Result<bool, ()> {
+        if pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7 {
+            return Err(());
+        }
+        Ok(self.get(pos).is_none())
+    }
+
+    pub fn is_opponent(&self, pos: Vec2, player: Player) -> Result<bool, ()> {
+        if pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7 {
+            return Err(());
+        }
+        if let Some(p) = self.get(pos) {
+            return Ok(p.player != player);
+        }
+        Ok(false)
     }
 }
 
@@ -176,16 +194,36 @@ fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<M
     valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 8, results);
 }
 
-fn valid_pawn_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
+fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     let dir = match piece.player {
         Player::White => Vec2::UP,
         Player::Black => Vec2::DOWN,
     };
 
+    // capture...
+    //
+    let cap = pos + dir + Vec2::new(1, 0);
+    if let Ok(true) = board.is_opponent(cap, piece.player) {
+        results.push(Move::new(cap, MoveResult::Capture(cap)))
+    }
+
+    let cap = pos + dir + Vec2::new(-1, 0);
+    if let Ok(true) = board.is_opponent(cap, piece.player) {
+        results.push(Move::new(cap, MoveResult::Capture(cap)))
+    }
+
+    // move...
+    //
+    pos = pos + dir;
+    if let Ok(true) = board.is_vacant(pos) {
+        results.push(Move::new(pos, MoveResult::Nothing));
+    }
+
     if piece.move_count == 0 {
-        valid_linear_moves(board, piece.player, pos, dir, 2, results);
-    } else {
-        valid_linear_moves(board, piece.player, pos, dir, 1, results);
+        pos = pos + dir;
+        if let Ok(true) = board.is_vacant(pos) {
+            results.push(Move::new(pos, MoveResult::Nothing));
+        }
     }
 }
 
