@@ -202,14 +202,44 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
 
     // capture...
     //
-    let cap = pos + dir + Vec2::new(1, 0);
+    let cap = pos + dir + Vec2::RIGHT;
     if let Ok(true) = board.is_opponent(cap, piece.player) {
         results.push(Move::new(cap, MoveResult::Capture(cap)))
     }
 
-    let cap = pos + dir + Vec2::new(-1, 0);
+    let cap = pos + dir + Vec2::LEFT;
     if let Ok(true) = board.is_opponent(cap, piece.player) {
         results.push(Move::new(cap, MoveResult::Capture(cap)))
+    }
+
+    // en pass...
+    //
+    let cap = pos + Vec2::LEFT;
+    if let Ok(true) = board.is_vacant(cap + dir) {
+        if let Some(Piece {
+            ty: PieceType::Pawn,
+            player,
+            move_count: _,
+        }) = board.get(cap)
+        {
+            if *player != piece.player {
+                results.push(Move::new(cap + dir, MoveResult::Capture(cap)));
+            }
+        }
+    }
+
+    let cap = pos + Vec2::RIGHT;
+    if let Ok(true) = board.is_vacant(cap + dir) {
+        if let Some(Piece {
+            ty: PieceType::Pawn,
+            player,
+            move_count: _,
+        }) = board.get(cap)
+        {
+            if *player != piece.player {
+                results.push(Move::new(cap + dir, MoveResult::Capture(cap)));
+            }
+        }
     }
 
     // move...
