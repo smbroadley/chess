@@ -48,7 +48,7 @@ impl GameState {
     pub fn can_move_cursor_piece(&self) -> bool {
         if let Some(p) = self.cursor_piece() {
             if p.player as usize == self.turn as usize {
-                if self.board.get_valid_moves(self.cursor).len() > 0 {
+                if self.board.get_valid_moves(self.cursor, false).len() > 0 {
                     return true;
                 }
             }
@@ -105,7 +105,7 @@ impl GameState {
 
     pub fn get_move_result(&self, from: Vec2, to: Vec2) -> MoveResult {
         if let Some(_) = self.board.get(from) {
-            let valid = self.board.get_valid_moves(from);
+            let valid = self.board.get_valid_moves(from, true);
 
             if let Some(m) = valid.iter().find(|m| m.pos == to) {
                 return m.result;

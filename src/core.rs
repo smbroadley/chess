@@ -110,12 +110,14 @@ impl Board {
         self.squares[b.y as usize][b.x as usize] = p1;
     }
 
-    pub fn get_valid_moves(&self, pos: Vec2) -> Vec<Move> {
+    pub fn get_valid_moves(&self, pos: Vec2, inc_cancel: bool) -> Vec<Move> {
         let piece = self.get(pos).expect("Peice expected at position");
 
         let mut valid: Vec<Move> = Default::default();
 
-        valid.push(Move::new(pos, MoveResult::Cancel));
+        if inc_cancel {
+            valid.push(Move::new(pos, MoveResult::Cancel));
+        }
 
         match piece.ty {
             PieceType::King => valid_king_moves(self, pos, piece, &mut valid),
