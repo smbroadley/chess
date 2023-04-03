@@ -22,6 +22,14 @@ impl Vec2 {
     pub const UP_RIGHT: Vec2 = Vec2::new(-1, 1);
     pub const DOWN_LEFT: Vec2 = Vec2::new(1, -1);
     pub const DOWN_RIGHT: Vec2 = Vec2::new(1, 1);
+
+    pub const AXIS: [Vec2; 4] = [Vec2::UP, Vec2::DOWN, Vec2::LEFT, Vec2::RIGHT];
+    pub const DIAG: [Vec2; 4] = [
+        Vec2::UP_LEFT,
+        Vec2::UP_RIGHT,
+        Vec2::DOWN_LEFT,
+        Vec2::DOWN_RIGHT,
+    ];
 }
 
 impl Mul<i16> for Vec2 {

@@ -50,6 +50,33 @@ impl Move {
     pub fn new(pos: Vec2, result: MoveResult) -> Self {
         Self { pos, result }
     }
+
+    pub fn capture(pos: Vec2) -> Self {
+        Self {
+            pos,
+            result: MoveResult::Capture(pos),
+        }
+    }
+
+    pub fn to(pos: Vec2) -> Self {
+        Self {
+            pos,
+            result: MoveResult::Nothing,
+        }
+    }
+
+    pub fn null(pos: Vec2) -> Self {
+        Self {
+            pos,
+            result: MoveResult::Cancel,
+        }
+    }
+}
+
+pub enum QueryResult<'a> {
+    Occupied(&'a Piece),
+    Vacant,
+    Invalid,
 }
 
 pub struct Board {
@@ -87,27 +114,23 @@ impl Board {
         self.squares[pos.y as usize][pos.x as usize].as_ref()
     }
 
-    pub fn get_square(&mut self, pos: Vec2) -> Result<&mut Option<Piece>, ()> {
+    pub fn query_square(&self, pos: Vec2) -> QueryResult {
+        // is the query on the board?
+        //
         if pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7 {
-            return Err(());
-        }
-        Ok(&mut self.squares[pos.y as usize][pos.x as usize])
-    }
-
-    pub fn get_mut(&mut self, pos: Vec2) -> Option<&mut Piece> {
-        self.squares[pos.y as usize][pos.x as usize].as_mut()
-    }
-
-    pub fn swap(&mut self, a: Vec2, b: Vec2) {
-        if a == b {
-            return;
+            return QueryResult::Invalid;
         }
 
-        let p1 = self.squares[a.y as usize][a.x as usize].take();
-        let p2 = self.squares[b.y as usize][b.x as usize].take();
+        // what is the state of the board square?
+        //
+        match &self.squares[pos.y as usize][pos.x as usize] {
+            Some(piece) => QueryResult::Occupied(piece),
+            None => QueryResult::Vacant,
+        }
+    }
 
-        self.squares[a.y as usize][a.x as usize] = p2;
-        self.squares[b.y as usize][b.x as usize] = p1;
+    pub fn get_mut(&mut self, pos: Vec2) -> &mut Option<Piece> {
+        &mut self.squares[pos.y as usize][pos.x as usize]
     }
 
     pub fn get_valid_moves(&self, pos: Vec2, inc_cancel: bool) -> Vec<Move> {
@@ -116,7 +139,7 @@ impl Board {
         let mut valid: Vec<Move> = Default::default();
 
         if inc_cancel {
-            valid.push(Move::new(pos, MoveResult::Cancel));
+            valid.push(Move::null(pos));
         }
 
         match piece.ty {
@@ -132,12 +155,13 @@ impl Board {
     }
 
     pub fn move_piece(&mut self, from: Vec2, to: Vec2) {
-        self.get_mut(from).expect("Moves must be valid").move_count += 1;
-        self.swap(from, to);
+        if let Some(piece) = self.get_mut(from).take() {
+            self.get_mut(to).insert(piece).move_count += 1;
+        }
     }
 
     pub fn take_piece(&mut self, pos: Vec2) {
-        self.get_square(pos).unwrap().take();
+        self.get_mut(pos).take();
     }
 
     pub fn is_vacant(&self, pos: Vec2) -> Result<bool, ()> {
@@ -159,10 +183,7 @@ impl Board {
 }
 
 fn valid_king_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
-    valid_linear_moves(board, piece.player, pos, Vec2::UP, 1, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::DOWN, 1, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::LEFT, 1, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 1, results);
+    valid_linear_moves(board, piece.player, pos, &Vec2::AXIS, 1, results);
 }
 
 fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
@@ -171,27 +192,21 @@ fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<
 }
 
 fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
-    valid_linear_moves(board, piece.player, pos, Vec2::UP_LEFT, 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::UP_RIGHT, 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::DOWN_LEFT, 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::DOWN_RIGHT, 8, results);
+    valid_linear_moves(board, piece.player, pos, &Vec2::DIAG, 8, results);
 }
 
 fn valid_knight_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     for x in [-1i16, -2, 1, 2] {
         for y in [-1i16, -2, 1, 2] {
             if x.unsigned_abs() != y.unsigned_abs() {
-                valid_linear_moves(board, piece.player, pos, Vec2::new(x, y), 1, results);
+                valid_linear_moves(board, piece.player, pos, &[Vec2::new(x, y)], 1, results);
             }
         }
     }
 }
 
 fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
-    valid_linear_moves(board, piece.player, pos, Vec2::UP, 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::DOWN, 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::LEFT, 8, results);
-    valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 8, results);
+    valid_linear_moves(board, piece.player, pos, &Vec2::AXIS, 8, results);
 }
 
 fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
@@ -212,7 +227,7 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
         results.push(Move::new(cap, MoveResult::Capture(cap)))
     }
 
-    // en pass...
+    // capture en pass...
     //
     let cap = pos + Vec2::LEFT;
     if let Ok(true) = board.is_vacant(cap + dir) {
@@ -260,26 +275,31 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
 fn valid_linear_moves(
     board: &Board,
     player: Player,
-    mut pos: Vec2,
-    dir: Vec2,
+    pos: Vec2,
+    steps: &[Vec2],
     limit: usize,
     results: &mut Vec<Move>,
 ) {
-    for _ in 0..limit {
-        pos = pos + dir;
+    for step in steps {
+        let mut test = pos;
 
-        if pos.x < 0 || pos.x >= 8 || pos.y < 0 || pos.y >= 8 {
-            return;
-        }
+        for _ in 0..limit {
+            test = test + *step;
 
-        if let Some(p) = board.get(pos) {
-            if player as u32 != p.player as u32 {
-                results.push(Move::new(pos, MoveResult::Capture(pos)));
+            match board.query_square(test) {
+                QueryResult::Occupied(piece) => {
+                    if piece.player != player {
+                        results.push(Move::capture(test));
+                    }
+                }
+                QueryResult::Vacant => {
+                    results.push(Move::to(test));
+                }
+                QueryResult::Invalid => {
+                    break;
+                }
             }
-            break;
         }
-
-        results.push(Move::new(pos, MoveResult::Nothing));
     }
 }
 
