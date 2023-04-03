@@ -22,13 +22,13 @@ impl Default for Theme {
                 cursor: Color::Rgb(40, 60, 120),
                 piece: Color::Rgb(0, 170, 255),
                 tile: Color::Rgb(10, 20, 40),
-                tile_highlight: Color::Rgb(150, 150, 90),
+                tile_highlight: Color::Rgb(130, 130, 70),
             },
             white: PlayerTheme {
                 cursor: Color::Rgb(120, 120, 120),
                 piece: Color::White,
-                tile: Color::Rgb(40, 40, 40),
-                tile_highlight: Color::Rgb(180, 180, 120),
+                tile: Color::Rgb(50, 50, 50),
+                tile_highlight: Color::Rgb(160, 160, 100),
             },
             cursor_valid: Color::Rgb(100, 130, 100),
         }
