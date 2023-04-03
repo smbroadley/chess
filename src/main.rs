@@ -1,6 +1,7 @@
 mod chess;
 mod core;
 mod gamestate;
+mod net;
 mod theme;
 mod timer;
 mod vec;

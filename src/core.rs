@@ -23,6 +23,18 @@ pub struct Piece {
     pub move_count: usize,
 }
 
+enum MoveResult {
+    Nothing,
+    Capture(Vec2),
+    Castle,
+    Promotion(PieceType),
+}
+
+pub struct Move {
+    coord: Vec2,
+    result: MoveResult,
+}
+
 pub struct Board {
     squares: [[Option<Piece>; 8]; 8],
 }
@@ -111,7 +123,15 @@ fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec
     valid_linear_moves(board, piece.player, pos, Vec2::DOWN_RIGHT, 8, results);
 }
 
-fn valid_knight_moves(_board: &Board, _pos: Vec2, _piece: &Piece, _results: &mut Vec<Vec2>) {}
+fn valid_knight_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+    for x in [-1i16, -2, 1, 2] {
+        for y in [-1i16, -2, 1, 2] {
+            if x.unsigned_abs() != y.unsigned_abs() {
+                valid_linear_moves(board, piece.player, pos, Vec2::new(x, y), 1, results);
+            }
+        }
+    }
+}
 
 fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
     valid_linear_moves(board, piece.player, pos, Vec2::UP, 8, results);
