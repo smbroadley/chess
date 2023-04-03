@@ -101,7 +101,7 @@ fn main() -> Result<(), io::Error> {
                     core::MoveResult::Capture(_) => "Capture",
                     core::MoveResult::Castle => "Castle",
                     core::MoveResult::Promotion(_) => "Promote",
-                    core::MoveResult::Invalid => "INVALID",
+                    core::MoveResult::Invalid => "",
                 };
 
                 let status = Paragraph::new(msg);
