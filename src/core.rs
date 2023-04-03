@@ -33,6 +33,7 @@ impl Display for Piece {
 
 #[derive(Copy, Clone)]
 pub enum MoveResult {
+    Cancel,
     Nothing,
     Capture(Vec2),
     Castle,
@@ -113,6 +114,8 @@ impl Board {
         let piece = self.get(pos).expect("Peice expected at position");
 
         let mut valid: Vec<Move> = Default::default();
+
+        valid.push(Move::new(pos, MoveResult::Cancel));
 
         match piece.ty {
             PieceType::King => valid_king_moves(self, pos, piece, &mut valid),

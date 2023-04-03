@@ -96,6 +96,7 @@ fn main() -> Result<(), io::Error> {
             //
             if let Mode::Moving(from) = game.mode {
                 let msg = match game.get_move_result(from, game.cursor) {
+                    core::MoveResult::Cancel => "Cancel",
                     core::MoveResult::Nothing => "Move",
                     core::MoveResult::Capture(_) => "Capture",
                     core::MoveResult::Castle => "Castle",

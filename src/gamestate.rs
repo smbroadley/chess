@@ -84,6 +84,10 @@ impl GameState {
             Mode::Moving(from) => {
                 let to = self.cursor;
                 match self.get_move_result(from, to) {
+                    MoveResult::Cancel => {
+                        self.mode = Mode::Selecting;
+                        return;
+                    }
                     MoveResult::Nothing => self.board.move_piece(from, to),
                     MoveResult::Capture(pos) => {
                         self.board.take_piece(pos);
