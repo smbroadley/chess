@@ -13,6 +13,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use gamestate::Mode;
 use std::{io, time::Duration};
 use tui::{
     backend::CrosstermBackend,
@@ -52,6 +53,7 @@ fn main() -> Result<(), io::Error> {
                     Constraint::Min(1),
                     Constraint::Length(8),
                     Constraint::Min(1),
+                    Constraint::Min(1),
                 ])
                 .split(frame.size());
 
@@ -89,6 +91,22 @@ fn main() -> Result<(), io::Error> {
             ]));
 
             frame.render_widget(p2, layout[0]);
+
+            // render status line
+            //
+            if let Mode::Moving(from) = game.mode {
+                let msg = match game.get_move_result(from, game.cursor) {
+                    core::MoveResult::Nothing => "Move",
+                    core::MoveResult::Capture(_) => "Capture",
+                    core::MoveResult::Castle => "Castle",
+                    core::MoveResult::Promotion(_) => "Promote",
+                    core::MoveResult::Invalid => "INVALID",
+                };
+
+                let status = Paragraph::new(msg);
+
+                frame.render_widget(status, layout[3]);
+            }
         })?;
 
         // handle input

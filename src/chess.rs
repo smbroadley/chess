@@ -1,4 +1,5 @@
 use crate::{
+    core::MoveResult,
     gamestate::{GameState, Mode},
     theme::Theme,
     vec::Vec2,
@@ -48,8 +49,10 @@ impl<'a> StatefulWidget for Chess<'a> {
                                 col = self.theme.cursor_valid;
                             }
                         }
-                        Mode::Moving(_) => {
-                            if state.is_valid_move(xy) {
+                        Mode::Moving(from) => {
+                            let result = state.get_move_result(from, xy);
+
+                            if !matches!(result, MoveResult::Invalid) {
                                 col = self.theme.cursor_valid;
                             }
                         }
@@ -57,8 +60,10 @@ impl<'a> StatefulWidget for Chess<'a> {
                 } else {
                     match state.mode {
                         Mode::Selecting => {}
-                        Mode::Moving(_) => {
-                            if state.is_valid_move(xy) {
+                        Mode::Moving(from) => {
+                            let result = state.get_move_result(from, xy);
+
+                            if !matches!(result, MoveResult::Invalid) {
                                 if is_white_tile {
                                     col = self.theme.white.tile_highlight;
                                 } else {

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{
-    core::{Board, Piece, Player},
+    core::{Board, MoveResult, Piece, Player},
     timer::CountdownTimer,
     vec::Vec2,
 };
@@ -28,6 +28,7 @@ impl GameState {
             Player::White
         };
         self.start();
+        self.mode = Mode::Selecting;
     }
 
     pub fn cursor_piece(&self) -> Option<&Piece> {
@@ -80,25 +81,33 @@ impl GameState {
                     }
                 }
             }
-            Mode::Moving(pos) => {
-                self.mode = Mode::Selecting;
-                self.change_player();
+            Mode::Moving(from) => {
+                let to = self.cursor;
+                match self.get_move_result(from, to) {
+                    MoveResult::Nothing => self.board.move_piece(from, to),
+                    MoveResult::Capture(pos) => {
+                        self.board.take_piece(pos);
+                        self.board.move_piece(from, to);
+                    }
+                    MoveResult::Castle => todo!(),
+                    MoveResult::Promotion(_) => todo!(),
+                    MoveResult::Invalid => return,
+                }
 
-                // test move
-                //
-                self.board.swap(pos, self.cursor);
-                self.board.get_mut(self.cursor).unwrap().move_count += 1;
+                self.change_player();
             }
         }
     }
 
-    pub fn is_valid_move(&self, pos: Vec2) -> bool {
-        if let Mode::Moving(held) = self.mode {
-            let valid = self.board.get_valid_moves(held);
+    pub fn get_move_result(&self, from: Vec2, to: Vec2) -> MoveResult {
+        if let Some(_) = self.board.get(from) {
+            let valid = self.board.get_valid_moves(from);
 
-            return valid.contains(&pos);
+            if let Some(m) = valid.iter().find(|m| m.pos == to) {
+                return m.result;
+            }
         }
-        false
+        MoveResult::Invalid
     }
 }
 

@@ -1,7 +1,9 @@
+use std::fmt::Display;
+
 use crate::vec::Vec2;
 
 #[repr(usize)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum PieceType {
     King = 0,
     Queen,
@@ -23,16 +25,30 @@ pub struct Piece {
     pub move_count: usize,
 }
 
-enum MoveResult {
+impl Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.ty)
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum MoveResult {
     Nothing,
     Capture(Vec2),
     Castle,
     Promotion(PieceType),
+    Invalid,
 }
 
 pub struct Move {
-    coord: Vec2,
-    result: MoveResult,
+    pub pos: Vec2,
+    pub result: MoveResult,
+}
+
+impl Move {
+    pub fn new(pos: Vec2, result: MoveResult) -> Self {
+        Self { pos, result }
+    }
 }
 
 pub struct Board {
@@ -70,6 +86,13 @@ impl Board {
         self.squares[pos.y as usize][pos.x as usize].as_ref()
     }
 
+    pub fn get_square(&mut self, pos: Vec2) -> Result<&mut Option<Piece>, ()> {
+        if pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7 {
+            return Err(());
+        }
+        Ok(&mut self.squares[pos.y as usize][pos.x as usize])
+    }
+
     pub fn get_mut(&mut self, pos: Vec2) -> Option<&mut Piece> {
         self.squares[pos.y as usize][pos.x as usize].as_mut()
     }
@@ -86,10 +109,10 @@ impl Board {
         self.squares[b.y as usize][b.x as usize] = p1;
     }
 
-    pub fn get_valid_moves(&self, pos: Vec2) -> Vec<Vec2> {
+    pub fn get_valid_moves(&self, pos: Vec2) -> Vec<Move> {
         let piece = self.get(pos).expect("Peice expected at position");
 
-        let mut valid: Vec<Vec2> = Default::default();
+        let mut valid: Vec<Move> = Default::default();
 
         match piece.ty {
             PieceType::King => valid_king_moves(self, pos, piece, &mut valid),
@@ -102,28 +125,36 @@ impl Board {
 
         valid
     }
+
+    pub fn move_piece(&mut self, from: Vec2, to: Vec2) {
+        self.swap(from, to);
+    }
+
+    pub fn take_piece(&mut self, pos: Vec2) {
+        self.get_square(pos).unwrap().take();
+    }
 }
 
-fn valid_king_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+fn valid_king_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     valid_linear_moves(board, piece.player, pos, Vec2::UP, 1, results);
     valid_linear_moves(board, piece.player, pos, Vec2::DOWN, 1, results);
     valid_linear_moves(board, piece.player, pos, Vec2::LEFT, 1, results);
     valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 1, results);
 }
 
-fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     valid_bishop_moves(board, pos, piece, results);
     valid_rook_moves(board, pos, piece, results);
 }
 
-fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     valid_linear_moves(board, piece.player, pos, Vec2::UP_LEFT, 8, results);
     valid_linear_moves(board, piece.player, pos, Vec2::UP_RIGHT, 8, results);
     valid_linear_moves(board, piece.player, pos, Vec2::DOWN_LEFT, 8, results);
     valid_linear_moves(board, piece.player, pos, Vec2::DOWN_RIGHT, 8, results);
 }
 
-fn valid_knight_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+fn valid_knight_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     for x in [-1i16, -2, 1, 2] {
         for y in [-1i16, -2, 1, 2] {
             if x.unsigned_abs() != y.unsigned_abs() {
@@ -133,14 +164,14 @@ fn valid_knight_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec
     }
 }
 
-fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+fn valid_rook_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     valid_linear_moves(board, piece.player, pos, Vec2::UP, 8, results);
     valid_linear_moves(board, piece.player, pos, Vec2::DOWN, 8, results);
     valid_linear_moves(board, piece.player, pos, Vec2::LEFT, 8, results);
     valid_linear_moves(board, piece.player, pos, Vec2::RIGHT, 8, results);
 }
 
-fn valid_pawn_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Vec2>) {
+fn valid_pawn_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
     let dir = match piece.player {
         Player::White => Vec2::UP,
         Player::Black => Vec2::DOWN,
@@ -156,27 +187,26 @@ fn valid_pawn_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<V
 fn valid_linear_moves(
     board: &Board,
     player: Player,
-    pos: Vec2,
+    mut pos: Vec2,
     dir: Vec2,
     limit: usize,
-    results: &mut Vec<Vec2>,
+    results: &mut Vec<Move>,
 ) {
-    let mut test_pos = pos;
     for _ in 0..limit {
-        test_pos = test_pos + dir;
+        pos = pos + dir;
 
-        if test_pos.x < 0 || test_pos.x >= 8 || test_pos.y < 0 || test_pos.y >= 8 {
+        if pos.x < 0 || pos.x >= 8 || pos.y < 0 || pos.y >= 8 {
             return;
         }
 
-        if let Some(p) = board.get(test_pos) {
+        if let Some(p) = board.get(pos) {
             if player as u32 != p.player as u32 {
-                results.push(test_pos);
+                results.push(Move::new(pos, MoveResult::Capture(pos)));
             }
             break;
         }
 
-        results.push(test_pos);
+        results.push(Move::new(pos, MoveResult::Nothing));
     }
 }
 
@@ -200,5 +230,3 @@ fn get_char_type(c: char) -> PieceType {
         _ => panic!("Chess piece char is not known"),
     }
 }
-
-impl Piece {}
