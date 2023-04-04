@@ -187,8 +187,8 @@ fn valid_king_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<M
 }
 
 fn valid_queen_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
-    valid_bishop_moves(board, pos, piece, results);
-    valid_rook_moves(board, pos, piece, results);
+    valid_linear_moves(board, piece.player, pos, &Vec2::AXIS, 8, results);
+    valid_linear_moves(board, piece.player, pos, &Vec2::DIAG, 8, results);
 }
 
 fn valid_bishop_moves(board: &Board, pos: Vec2, piece: &Piece, results: &mut Vec<Move>) {
@@ -291,6 +291,7 @@ fn valid_linear_moves(
                     if piece.player != player {
                         results.push(Move::capture(test));
                     }
+                    break;
                 }
                 QueryResult::Vacant => {
                     results.push(Move::to(test));
