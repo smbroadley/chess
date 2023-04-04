@@ -219,12 +219,12 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
     //
     let cap = pos + dir + Vec2::RIGHT;
     if let Ok(true) = board.is_opponent(cap, piece.player) {
-        results.push(Move::new(cap, MoveResult::Capture(cap)))
+        results.push(Move::capture(cap));
     }
 
     let cap = pos + dir + Vec2::LEFT;
     if let Ok(true) = board.is_opponent(cap, piece.player) {
-        results.push(Move::new(cap, MoveResult::Capture(cap)))
+        results.push(Move::capture(cap));
     }
 
     // capture en pass...
@@ -234,7 +234,7 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
         if let Some(Piece {
             ty: PieceType::Pawn,
             player,
-            move_count: _,
+            ..
         }) = board.get(cap)
         {
             if *player != piece.player {
@@ -248,7 +248,7 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
         if let Some(Piece {
             ty: PieceType::Pawn,
             player,
-            move_count: _,
+            ..
         }) = board.get(cap)
         {
             if *player != piece.player {
@@ -261,13 +261,13 @@ fn valid_pawn_moves(board: &Board, mut pos: Vec2, piece: &Piece, results: &mut V
     //
     pos = pos + dir;
     if let Ok(true) = board.is_vacant(pos) {
-        results.push(Move::new(pos, MoveResult::Nothing));
+        results.push(Move::to(pos));
     }
 
     if piece.move_count == 0 {
         pos = pos + dir;
         if let Ok(true) = board.is_vacant(pos) {
-            results.push(Move::new(pos, MoveResult::Nothing));
+            results.push(Move::to(pos));
         }
     }
 }
