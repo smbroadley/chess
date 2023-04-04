@@ -11,6 +11,7 @@ use crate::render::Theme;
 
 fn main() -> Result<(), io::Error> {
     let game = Chess::default();
+
     let theme = Theme::default();
     let renderer = TuiRenderer::new(theme);
 
