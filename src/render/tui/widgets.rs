@@ -1,23 +1,22 @@
 use crate::{
     core::MoveResult,
-    gamestate::{GameState, Mode},
-    theme::Theme,
-    vec::Vec2,
+    core::{Chess, Mode, Vec2},
+    render::Theme,
 };
 use tui::{layout::Rect, widgets::StatefulWidget};
 
-pub struct Chess<'a> {
+pub struct ChessWidget<'a> {
     theme: &'a Theme,
 }
 
-impl<'a> Chess<'a> {
+impl<'a> ChessWidget<'a> {
     pub fn new(theme: &'a Theme) -> Self {
         Self { theme }
     }
 }
 
-impl<'a> StatefulWidget for Chess<'a> {
-    type State = GameState;
+impl<'a> StatefulWidget for ChessWidget<'a> {
+    type State = Chess;
 
     fn render(self, area: Rect, buf: &mut tui::buffer::Buffer, state: &mut Self::State) {
         let glyphs = [

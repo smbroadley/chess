@@ -1,25 +1,32 @@
 use std::time::Duration;
 
 use crate::{
+    core::timer::CountdownTimer,
+    core::Vec2,
     core::{Board, MoveResult, Piece, Player},
-    timer::CountdownTimer,
-    vec::Vec2,
 };
+
+pub enum State {
+    Paused,
+    Playing,
+    Exit,
+}
 
 pub enum Mode {
     Selecting,
     Moving(Vec2),
 }
 
-pub struct GameState {
+pub struct Chess {
     pub turn: Player,
     pub cursor: Vec2,
     pub timers: [CountdownTimer; 2],
     pub board: Board,
     pub mode: Mode,
+    pub state: State,
 }
 
-impl GameState {
+impl Chess {
     pub fn change_player(&mut self) {
         self.stop();
         self.turn = if let Player::White = self.turn {
@@ -36,12 +43,13 @@ impl GameState {
     }
 
     fn new(board: Board, duration: Duration) -> Self {
-        GameState {
+        Chess {
             board,
             turn: Player::White,
             cursor: Vec2::new(0, 0),
             timers: [CountdownTimer::new(duration), CountdownTimer::new(duration)],
             mode: Mode::Selecting,
+            state: State::Paused,
         }
     }
 
@@ -57,14 +65,18 @@ impl GameState {
     }
 
     pub fn move_cursor(&mut self, dir: Vec2) {
-        let next = self.cursor + dir;
+        let pos = self.cursor + dir;
+        self.set_cursor(pos)
+    }
 
-        if next.x >= 0 && next.x < 8 && next.y >= 0 && next.y < 8 {
-            self.cursor = next;
+    pub fn set_cursor(&mut self, pos: Vec2) {
+        if pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8 {
+            self.cursor = pos;
         }
     }
 
     pub fn start(&mut self) {
+        self.state = State::Playing;
         self.timers[self.turn as usize].start();
     }
 
@@ -113,9 +125,13 @@ impl GameState {
         }
         MoveResult::Invalid
     }
+
+    pub fn quit(&mut self) {
+        self.state = State::Exit;
+    }
 }
 
-impl Default for GameState {
+impl Default for Chess {
     fn default() -> Self {
         let data = "RNBQKBNR\
                     PPPPPPPP\
@@ -129,6 +145,6 @@ impl Default for GameState {
         let board = Board::from_string(data);
         let duration = Duration::from_secs(10 * 60);
 
-        GameState::new(board, duration)
+        Chess::new(board, duration)
     }
 }

@@ -1,147 +1,78 @@
-mod chess;
 mod core;
-mod gamestate;
-mod net;
-mod theme;
-mod timer;
-mod vec;
+mod input;
+mod render;
 
-use crossterm::{
-    event::{
-        poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent, KeyEventKind,
-    },
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
-use gamestate::Mode;
-use std::{io, time::Duration};
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Layout},
-    style::Style,
-    text::{Span, Spans},
-    widgets::Paragraph,
-    Terminal,
-};
-use vec::Vec2;
+use std::io;
 
-use crate::chess::Chess;
-use crate::core::Player;
-use crate::gamestate::GameState;
-use crate::theme::Theme;
+use crate::core::{Chess, State};
+use crate::input::CrosstermInput;
+use crate::render::tui::TuiRenderer;
+use crate::render::Theme;
 
-fn main() -> Result<(), io::Error> {
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+struct Engine<R: render::Renderer, I1: input::Input, I2: input::Input> {
+    game: Chess,
+    renderer: R,
+    p1_input: I1,
+    p2_input: I2,
+}
 
-    let mut game = GameState::default();
-    let theme = Theme::default();
-
-    game.start();
-
-    loop {
-        // render the game
-        //
-        terminal.draw(|frame| {
-            let layout = Layout::default()
-                .direction(tui::layout::Direction::Vertical)
-                .margin(0)
-                .constraints([
-                    Constraint::Min(1),
-                    Constraint::Length(8),
-                    Constraint::Min(1),
-                    Constraint::Min(1),
-                ])
-                .split(frame.size());
-
-            let chess = Chess::new(&theme);
-
-            frame.render_stateful_widget(chess, layout[1], &mut game);
-
-            // render clocks
-            //
-            let white_clock = if game.turn == Player::White {
-                theme.white.piece
-            } else {
-                theme.white.tile
-            };
-
-            let black_clock = if game.turn == Player::Black {
-                theme.black.piece
-            } else {
-                theme.black.tile
-            };
-
-            let p1 = Paragraph::new(Spans::from(vec![Span::styled(
-                format!("{}", game.timers[0]),
-                Style::default().fg(white_clock),
-            )]));
-
-            frame.render_widget(p1, layout[2]);
-
-            let p2 = Paragraph::new(Spans::from(vec![
-                Span::from(" "),
-                Span::styled(
-                    format!("{}", game.timers[1]),
-                    Style::default().fg(black_clock),
-                ),
-            ]));
-
-            frame.render_widget(p2, layout[0]);
-
-            // render status line
-            //
-            if let Mode::Moving(from) = game.mode {
-                let msg = match game.get_move_result(from, game.cursor) {
-                    core::MoveResult::Cancel => "Cancel",
-                    core::MoveResult::Nothing => "Move",
-                    core::MoveResult::Capture(_) => "Capture",
-                    core::MoveResult::Castle => "Castle",
-                    core::MoveResult::Promotion(_) => "Promote",
-                    core::MoveResult::Invalid => "",
-                };
-
-                let status = Paragraph::new(msg);
-
-                frame.render_widget(status, layout[3]);
-            }
-        })?;
-
-        // handle input
-        //
-        if poll(Duration::from_millis(100))? {
-            if let Event::Key(KeyEvent {
-                code,
-                kind: KeyEventKind::Press,
-                modifiers: _,
-                state: _,
-            }) = read()?
-            {
-                match code {
-                    KeyCode::Esc => break,
-                    KeyCode::Char('h') => game.move_cursor(Vec2::LEFT),
-                    KeyCode::Char('j') => game.move_cursor(Vec2::DOWN),
-                    KeyCode::Char('k') => game.move_cursor(Vec2::UP),
-                    KeyCode::Char('l') => game.move_cursor(Vec2::RIGHT),
-                    KeyCode::Char(' ') => game.action(),
-                    _ => {}
-                }
-            }
+impl<R: render::Renderer, I1: input::Input, I2: input::Input> Engine<R, I1, I2> {
+    pub fn new(game: Chess, renderer: R, p1_input: I1, p2_input: I2) -> Self {
+        Self {
+            game,
+            renderer,
+            p1_input,
+            p2_input,
         }
     }
 
-    // restore terminal
+    pub fn run(mut self) {
+        let Engine {
+            game,
+            renderer,
+            p1_input,
+            p2_input,
+        } = &mut self;
+
+        renderer.init();
+        renderer.set_theme(Theme::default());
+
+        game.start();
+
+        loop {
+            match game.turn {
+                core::Player::White => p1_input.update(game),
+                core::Player::Black => p2_input.update(game),
+            }
+            .err();
+
+            renderer.render(game);
+
+            match game.state {
+                State::Exit => break,
+                State::Paused => {}
+                State::Playing => {}
+            }
+        }
+
+        renderer.shutdown();
+    }
+}
+
+fn main() -> Result<(), io::Error> {
+    let game = Chess::default();
+    let theme = Theme::default();
+    let renderer = TuiRenderer::new(theme);
+
+    // TODO: when playing over the network, the second player
+    // will use a NetworkInput type.
     //
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+    let p1 = CrosstermInput;
+    let p2 = CrosstermInput;
+
+    let engine = Engine::new(game, renderer, p1, p2);
+
+    engine.run();
 
     Ok(())
 }
