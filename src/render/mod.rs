@@ -5,6 +5,7 @@ use crate::core::Chess;
 
 pub use theme::Theme;
 
+#[derive(Debug)]
 pub struct Error {}
 
 pub trait Renderer {

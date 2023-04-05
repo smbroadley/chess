@@ -1,5 +1,6 @@
 use super::{PieceType, Vec2};
 
+#[allow(dead_code)]
 #[derive(Copy, Clone)]
 pub enum MoveResult {
     Cancel,

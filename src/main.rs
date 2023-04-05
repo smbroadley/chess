@@ -2,14 +2,12 @@ mod core;
 mod input;
 mod render;
 
-use std::io;
-
-use crate::core::{Chess, Engine};
+use crate::core::{engine::Engine, Chess};
 use crate::input::CrosstermInput;
 use crate::render::tui::TuiRenderer;
 use crate::render::Theme;
 
-fn main() -> Result<(), io::Error> {
+fn main() -> Result<(), core::engine::Error> {
     let game = Chess::default();
 
     let theme = Theme::default();
@@ -23,7 +21,7 @@ fn main() -> Result<(), io::Error> {
 
     let engine = Engine::new(game, renderer, p1, p2);
 
-    engine.run();
+    engine.run()?;
 
     Ok(())
 }

@@ -30,6 +30,7 @@ pub struct TuiRenderer {
 }
 
 impl TuiRenderer {
+    #[allow(dead_code)]
     pub fn new(theme: Theme) -> Self {
         Self {
             terminal: None,
