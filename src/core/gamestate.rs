@@ -140,7 +140,7 @@ impl Default for Chess {
                     ........\
                     ........\
                     pppppppp\
-                    rnbkqbnr";
+                    rnbqkbnr";
 
         let board = Board::from_string(data);
         let duration = Duration::from_secs(10 * 60);

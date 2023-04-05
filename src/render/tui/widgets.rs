@@ -34,9 +34,9 @@ impl<'a> StatefulWidget for ChessWidget<'a> {
                 let is_white_tile = (x + y) % 2 == 1;
 
                 let mut col = if is_white_tile {
-                    self.theme.white.tile
-                } else {
                     self.theme.black.tile
+                } else {
+                    self.theme.white.tile
                 };
 
                 if is_cursor {
